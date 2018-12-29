@@ -98,9 +98,32 @@ func TestDOHStamp(t *testing.T) {
 	}
 }
 
+func TestDOHShortStamp(t *testing.T) {
+	const expected = `sdns://AgAAAAAAAAAAAAALZXhhbXBsZS5jb20KL2Rucy1xdWVyeQ`
+
+	var stamp ServerStamp
+	stamp.Proto = StampProtoTypeDoH
+	stamp.ProviderName = "example.com"
+	stamp.Path = "/dns-query"
+	stampStr := stamp.String()
+
+	if stampStr != expected {
+		t.Errorf("expected stamp %q but got instead %q", expected, stampStr)
+	}
+
+	parsedStamp, err := NewServerStampFromString(stampStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps := parsedStamp.String()
+	if ps != stampStr {
+		t.Errorf("re-parsed stamp string is %q, but %q expected", ps, stampStr)
+	}
+}
+
 func TestDOHStampParse(t *testing.T) {
 	// Google DoH
-	stampStr := "sdns://AgUAAAAAAAAAAAAOZG5zLmdvb2dsZS5jb20NL2V4cGVyaW1lbnRhbA"
+	stampStr := "sdns://AgUAAAAAAAAAACAe9iTP_15r07rd8_3b_epWVGfjdymdx-5mdRZvMAzBuQ5kbnMuZ29vZ2xlLmNvbQ0vZXhwZXJpbWVudGFs"
 	stamp, err := NewServerStampFromString(stampStr)
 
 	if err != nil || stamp.ProviderName == "" {
@@ -126,6 +149,28 @@ func TestDOTStamp(t *testing.T) {
 	stamp.Proto = StampProtoTypeTLS
 	stamp.ProviderName = "example.com"
 	stamp.Hashes = [][]uint8{pk1}
+	stampStr := stamp.String()
+
+	if stampStr != expected {
+		t.Errorf("expected stamp %q but got instead %q", expected, stampStr)
+	}
+
+	parsedStamp, err := NewServerStampFromString(stampStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps := parsedStamp.String()
+	if ps != stampStr {
+		t.Errorf("re-parsed stamp string is %q, but %q expected", ps, stampStr)
+	}
+}
+
+func TestDOTShortStamp(t *testing.T) {
+	const expected = "sdns://AwAAAAAAAAAAAAAPZG5zLmFkZ3VhcmQuY29t"
+
+	var stamp ServerStamp
+	stamp.Proto = StampProtoTypeTLS
+	stamp.ProviderName = "dns.adguard.com"
 	stampStr := stamp.String()
 
 	if stampStr != expected {
