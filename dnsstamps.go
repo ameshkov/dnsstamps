@@ -43,7 +43,7 @@ const (
 	// StampProtoTypeTLS is DNS-over-TLS
 	StampProtoTypeTLS = StampProtoType(0x03)
 	// StampProtoTypeDoQ is DNS-over-QUIC
-    StampProtoTypeDoQ = StampProtoType(0x04)
+	StampProtoTypeDoQ = StampProtoType(0x04)
 )
 
 func (stampProtoType *StampProtoType) String() string {
@@ -56,8 +56,8 @@ func (stampProtoType *StampProtoType) String() string {
 		return "DoH"
 	case StampProtoTypeTLS:
 		return "DoT"
-    case StampProtoTypeDoQ:
-        return "DoQ"
+	case StampProtoTypeDoQ:
+		return "DoQ"
 	default:
 		panic("Unexpected protocol")
 	}
@@ -106,7 +106,7 @@ func NewServerStampFromString(stampStr string) (ServerStamp, error) {
 	} else if bin[0] == uint8(StampProtoTypeTLS) {
 		return newDoTOrDoQServerStamp(bin, StampProtoTypeTLS, defaultDoTPort)
 	} else if bin[0] == uint8(StampProtoTypeDoQ) {
-	    return newDoTOrDoQServerStamp(bin, StampProtoTypeDoQ, defaultDoQPort)
+		return newDoTOrDoQServerStamp(bin, StampProtoTypeDoQ, defaultDoQPort)
 	}
 	return ServerStamp{}, errors.New("unsupported stamp version or protocol")
 }
@@ -120,8 +120,8 @@ func (stamp *ServerStamp) String() string {
 		return stamp.dohString()
 	case StampProtoTypeTLS:
 		return stamp.dotOrDoqString(StampProtoTypeTLS, defaultDoTPort)
-    case StampProtoTypeDoQ:
-        return stamp.dotOrDoqString(StampProtoTypeDoQ, defaultDoQPort)
+	case StampProtoTypeDoQ:
+		return stamp.dotOrDoqString(StampProtoTypeDoQ, defaultDoQPort)
 	case StampProtoTypePlain:
 		return stamp.plainString()
 	}
