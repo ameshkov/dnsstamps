@@ -13,6 +13,7 @@ import (
 const (
 	defaultDoHPort   = 443
 	defaultDoTPort   = 843
+	defaultDoQPort   = 784
 	defaultPlainPort = 53
 	stampProtocol    = "sdns://"
 )
@@ -41,6 +42,8 @@ const (
 	StampProtoTypeDoH = StampProtoType(0x02)
 	// StampProtoTypeTLS is DNS-over-TLS
 	StampProtoTypeTLS = StampProtoType(0x03)
+	// StampProtoTypeDoQ is DNS-over-QUIC
+    StampProtoTypeDoQ = StampProtoType(0x04)
 )
 
 func (stampProtoType *StampProtoType) String() string {
@@ -53,6 +56,8 @@ func (stampProtoType *StampProtoType) String() string {
 		return "DoH"
 	case StampProtoTypeTLS:
 		return "DoT"
+    case StampProtoTypeDoQ:
+        return "DoQ"
 	default:
 		panic("Unexpected protocol")
 	}
@@ -99,7 +104,9 @@ func NewServerStampFromString(stampStr string) (ServerStamp, error) {
 	} else if bin[0] == uint8(StampProtoTypeDoH) {
 		return newDoHServerStamp(bin)
 	} else if bin[0] == uint8(StampProtoTypeTLS) {
-		return newDotServerStamp(bin)
+		return newDoTOrDoQServerStamp(bin, StampProtoTypeTLS, defaultDoTPort)
+	} else if bin[0] == uint8(StampProtoTypeDoQ) {
+	    return newDoTOrDoQServerStamp(bin, StampProtoTypeDoQ, defaultDoQPort)
 	}
 	return ServerStamp{}, errors.New("unsupported stamp version or protocol")
 }
@@ -112,7 +119,9 @@ func (stamp *ServerStamp) String() string {
 	case StampProtoTypeDoH:
 		return stamp.dohString()
 	case StampProtoTypeTLS:
-		return stamp.dotString()
+		return stamp.dotOrDoqString(StampProtoTypeTLS, defaultDoTPort)
+    case StampProtoTypeDoQ:
+        return stamp.dotOrDoqString(StampProtoTypeDoQ, defaultDoQPort)
 	case StampProtoTypePlain:
 		return stamp.plainString()
 	}
@@ -224,9 +233,9 @@ func newDoHServerStamp(bin []byte) (ServerStamp, error) {
 	return stamp, nil
 }
 
-// id(u8)=0x03 props addrLen(1) serverAddr hashLen(1) hash providerNameLen(1) providerName
-func newDotServerStamp(bin []byte) (ServerStamp, error) {
-	stamp := ServerStamp{Proto: StampProtoTypeTLS}
+// id(u8)=0x03|0x04 props addrLen(1) serverAddr hashLen(1) hash providerNameLen(1) providerName
+func newDoTOrDoQServerStamp(bin []byte, stampType StampProtoType, defaultPort uint16) (ServerStamp, error) {
+	stamp := ServerStamp{Proto: stampType}
 	if len(bin) < 22 {
 		return stamp, errors.New("stamp is too short")
 	}
@@ -271,7 +280,7 @@ func newDotServerStamp(bin []byte) (ServerStamp, error) {
 	}
 
 	if net.ParseIP(strings.TrimRight(strings.TrimLeft(stamp.ServerAddrStr, "["), "]")) != nil {
-		stamp.ServerAddrStr = fmt.Sprintf("%s:%d", stamp.ServerAddrStr, defaultDoTPort)
+		stamp.ServerAddrStr = fmt.Sprintf("%s:%d", stamp.ServerAddrStr, defaultPort)
 	}
 
 	return stamp, nil
@@ -365,14 +374,14 @@ func (stamp *ServerStamp) dohString() string {
 	return stampProtocol + str
 }
 
-func (stamp *ServerStamp) dotString() string {
+func (stamp *ServerStamp) dotOrDoqString(stampType StampProtoType, defaultPort uint16) string {
 	bin := make([]uint8, 9)
-	bin[0] = uint8(StampProtoTypeTLS)
+	bin[0] = uint8(stampType)
 	binary.LittleEndian.PutUint64(bin[1:9], uint64(stamp.Props))
 
 	serverAddrStr := stamp.ServerAddrStr
-	if strings.HasSuffix(serverAddrStr, ":"+strconv.Itoa(defaultDoTPort)) {
-		serverAddrStr = serverAddrStr[:len(serverAddrStr)-1-len(strconv.Itoa(defaultDoTPort))]
+	if strings.HasSuffix(serverAddrStr, ":"+strconv.Itoa(int(defaultPort))) {
+		serverAddrStr = serverAddrStr[:len(serverAddrStr)-1-len(strconv.Itoa(int(defaultPort)))]
 	}
 	bin = append(bin, uint8(len(serverAddrStr)))
 	bin = append(bin, []uint8(serverAddrStr)...)
