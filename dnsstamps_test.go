@@ -187,6 +187,79 @@ func TestDOTShortStamp(t *testing.T) {
 	}
 }
 
+func TestDOQStamp(t *testing.T) {
+	const expected = `sdns://BAcAAAAAAAAACTEyNy4wLjAuMSDDhGvyS56TymQnTA7GfB7MXgJP_KzS10AZNQ6B_lRq5AtleGFtcGxlLmNvbQ`
+
+	var stamp ServerStamp
+	stamp.Props |= ServerInformalPropertyDNSSEC
+	stamp.Props |= ServerInformalPropertyNoLog
+	stamp.Props |= ServerInformalPropertyNoFilter
+	stamp.ServerAddrStr = "127.0.0.1"
+
+	stamp.Proto = StampProtoTypeDoQ
+	stamp.ProviderName = "example.com"
+	stamp.Hashes = [][]uint8{pk1}
+	stampStr := stamp.String()
+
+	if stampStr != expected {
+		t.Errorf("expected stamp %q but got instead %q", expected, stampStr)
+	}
+
+	parsedStamp, err := NewServerStampFromString(stampStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps := parsedStamp.String()
+	if ps != stampStr {
+		t.Errorf("re-parsed stamp string is %q, but %q expected", ps, stampStr)
+	}
+}
+
+func TestDOQShortStamp(t *testing.T) {
+	const expected = "sdns://BAAAAAAAAAAAAAAPZG5zLmFkZ3VhcmQuY29t"
+
+	var stamp ServerStamp
+	stamp.Proto = StampProtoTypeDoQ
+	stamp.ProviderName = "dns.adguard.com"
+	stampStr := stamp.String()
+
+	if stampStr != expected {
+		t.Errorf("expected stamp %q but got instead %q", expected, stampStr)
+	}
+
+	parsedStamp, err := NewServerStampFromString(stampStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps := parsedStamp.String()
+	if ps != stampStr {
+		t.Errorf("re-parsed stamp string is %q, but %q expected", ps, stampStr)
+	}
+}
+
+func TestDOQOnlyPort(t *testing.T) {
+	const expected = "sdns://BAAAAAAAAAAABTo3ODQ0AA9kbnMuYWRndWFyZC5jb20"
+
+	var stamp ServerStamp
+	stamp.ServerAddrStr = ":7844"
+	stamp.Proto = StampProtoTypeDoQ
+	stamp.ProviderName = "dns.adguard.com"
+	stampStr := stamp.String()
+
+	if stampStr != expected {
+		t.Errorf("expected stamp %q but got instead %q", expected, stampStr)
+	}
+
+	parsedStamp, err := NewServerStampFromString(stampStr)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ps := parsedStamp.String()
+	if ps != stampStr {
+		t.Errorf("re-parsed stamp string is %q, but %q expected", ps, stampStr)
+	}
+}
+
 func TestPlainStamp(t *testing.T) {
 	const expected = `sdns://AAcAAAAAAAAABzguOC44Ljg`
 
