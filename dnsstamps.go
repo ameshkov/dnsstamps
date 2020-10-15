@@ -11,11 +11,12 @@ import (
 )
 
 const (
-	defaultDoHPort   = 443
-	defaultDoTPort   = 843
-	defaultDoQPort   = 784
-	defaultPlainPort = 53
-	stampProtocol    = "sdns://"
+	defaultDNSCryptPort = 443
+	defaultDoHPort      = 443
+	defaultDoTPort      = 843
+	defaultDoQPort      = 784
+	defaultPlainPort    = 53
+	stampProtocol       = "sdns://"
 )
 
 // ServerInformalProperties represents informal properties about the resolver
@@ -147,7 +148,7 @@ func newDNSCryptServerStamp(bin []byte) (ServerStamp, error) {
 	stamp.ServerAddrStr = string(bin[pos : pos+stampLen])
 	pos += stampLen
 	if net.ParseIP(strings.TrimRight(strings.TrimLeft(stamp.ServerAddrStr, "["), "]")) != nil {
-		stamp.ServerAddrStr = fmt.Sprintf("%s:%d", stamp.ServerAddrStr, defaultDoHPort)
+		stamp.ServerAddrStr = fmt.Sprintf("%s:%d", stamp.ServerAddrStr, defaultDNSCryptPort)
 	}
 
 	stampLen = int(bin[pos])
@@ -321,8 +322,8 @@ func (stamp *ServerStamp) dnsCryptString() string {
 	binary.LittleEndian.PutUint64(bin[1:9], uint64(stamp.Props))
 
 	serverAddrStr := stamp.ServerAddrStr
-	if strings.HasSuffix(serverAddrStr, ":"+strconv.Itoa(defaultDoHPort)) {
-		serverAddrStr = serverAddrStr[:len(serverAddrStr)-1-len(strconv.Itoa(defaultDoHPort))]
+	if strings.HasSuffix(serverAddrStr, ":"+strconv.Itoa(defaultDNSCryptPort)) {
+		serverAddrStr = serverAddrStr[:len(serverAddrStr)-1-len(strconv.Itoa(defaultDNSCryptPort))]
 	}
 	bin = append(bin, uint8(len(serverAddrStr)))
 	bin = append(bin, []uint8(serverAddrStr)...)
